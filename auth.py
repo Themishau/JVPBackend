@@ -2,6 +2,8 @@ import jwt
 import datetime
 from flask import Blueprint, render_template, redirect, url_for, request, jsonify, flash, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
+
+import UserSession
 from UserData import User, SQL_Writer
 from flask_cors import CORS
 from app import db
@@ -10,6 +12,7 @@ from wtforms.validators import DataRequired, Email
 import logging
 from functools import wraps
 from UserSession import token_required
+from UserSession import startUserSession
 auth = Blueprint('auth', __name__)
 salt = '5aP3v*4!1bN<x4i&3'
 logging.basicConfig(level=logging.DEBUG,
@@ -90,6 +93,8 @@ def login():
             {'user': username, 'exp': datetime.datetime.utcnow() + current_app.config['JWT_REFRESH_TOKEN_EXPIRES']},
             key=current_app.config['SECRET_KEY'])
         response = jsonify({'accessToken': accessToken, 'refreshToken': refreshToken, 'user': username, 'message': 'login successful'})
+        UserSessionMongoStart = jsonify({'accessToken': accessToken, 'refreshToken': refreshToken, 'user': username, 'time': datetime.date.today().replace(microsecond=0) })
+        UserSession.startUserSession(UserSessionMongoStart)
         return response
     else:
         response = jsonify({'error': 'invalid username or password'}), 401

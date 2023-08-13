@@ -41,3 +41,7 @@ def token_required(f):
             return jsonify(invalid_msg), 401
 
     return _verify
+
+
+def startUserSession(f):
+    impelemnt
