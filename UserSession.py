@@ -44,4 +44,7 @@ def token_required(f):
 
 
 def startUserSession(f):
-    impelemnt
+    return
+
+def closeUserSession(f):
+    return

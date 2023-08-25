@@ -7,7 +7,7 @@ from settings import reads
 from json import JSONEncoder
 # init SQLAlchemy so we can use it later in our models
 # secret key is saved in file
-db = SQLAlchemy()
+Logindb = SQLAlchemy()
 Sessiondb = MongoEngine()
 TodoListDB = MongoEngine()
 
@@ -30,7 +30,7 @@ def create_app():
         'host': 'localhost',
         'port': 27018
     }
-    db.init_app(app)
+    Logindb.init_app(app)
     Sessiondb.init_app(app)
     TodoListDB.init_app(app)
 

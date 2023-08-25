@@ -6,51 +6,19 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import UserSession
 from UserData import User, SQL_Writer
 from flask_cors import CORS
-from app import db
+from app import Logindb
 from wtforms import StringField, PasswordField, BooleanField
 from wtforms.validators import DataRequired, Email
 import logging
 from functools import wraps
 from UserSession import token_required
 from UserSession import startUserSession
+from UserSession import closeUserSession
 auth = Blueprint('auth', __name__)
 salt = '5aP3v*4!1bN<x4i&3'
 logging.basicConfig(level=logging.DEBUG,
                     format="%(asctime)s %(levelname)s %(message)s",
                     datefmt="%Y-%m-%d %H:%M:%S")
-
-
-# def token_required(f):
-#     @wraps(f)
-#     def _verify(*args, **kwargs):
-#         auth_headers = request.headers.get('Authorization', '').split()
-#
-#         invalid_msg = {
-#             'message': 'Invalid token. Registeration and / or authentication required',
-#             'authenticated': False
-#         }
-#         expired_msg = {
-#             'message': 'Expired token. Reauthentication required.',
-#             'authenticated': False
-#         }
-#
-#         if len(auth_headers) != 2:
-#             return jsonify(invalid_msg), 401
-#
-#         try:
-#             token = auth_headers[1]
-#             data = jwt.decode(token, algorithms="HS256", key=current_app.config['SECRET_KEY'])
-#             user = User.query.filter_by(email=data['user']).first()
-#             if not user:
-#                 raise RuntimeError('User not found')
-#             return f(user, *args, **kwargs)
-#         except jwt.ExpiredSignatureError:
-#             return jsonify(expired_msg), 401  # 401 is Unauthorized HTTP status code
-#         except (jwt.InvalidTokenError, Exception) as e:
-#             print(e)
-#             return jsonify(invalid_msg), 401
-#
-#     return _verify
 
 @auth.route('/auth/checkUser', methods=['GET', 'POST'])
 @token_required
@@ -94,12 +62,31 @@ def login():
             key=current_app.config['SECRET_KEY'])
         response = jsonify({'accessToken': accessToken, 'refreshToken': refreshToken, 'user': username, 'message': 'login successful'})
         UserSessionMongoStart = jsonify({'accessToken': accessToken, 'refreshToken': refreshToken, 'user': username, 'time': datetime.date.today().replace(microsecond=0) })
-        UserSession.startUserSession(UserSessionMongoStart)
+        startUserSession(UserSessionMongoStart)
         return response
     else:
         response = jsonify({'error': 'invalid username or password'}), 401
         return response
 
+
+@auth.route('/auth/signout', methods=['POST', ])
+def logout():
+    logging.debug(f'data: {request.get_json()}')
+    username = request.get_json().get('username')
+
+    user = User.query.filter_by(
+        email=username).first()  # if this returns a user, then the email already exists in database
+    logging.debug(user)
+    if not user:  # if a user is not found, we want to redirect back to signin page so user can try again
+        return redirect(url_for('auth.signin'))
+        # log user in
+        response = jsonify({'user': username, 'message': 'logout successful'})
+        UserSessionMongoStart = jsonify({'accessToken': accessToken, 'refreshToken': refreshToken, 'user': username, 'time': datetime.date.today().replace(microsecond=0) })
+        closeUserSession(UserSessionMongoStart)
+        return response
+    else:
+        response = jsonify({'error': 'invalid username'}), 401
+        return response
 
 @auth.route('/auth/refreshtoken', methods=['POST', ])
 def getRefreshToken():
@@ -137,24 +124,9 @@ def getRefreshToken():
 
 
 
-
-
 @auth.route('/signup')
 def signup():
     return redirect(url_for('auth.signup'))
-
-
-# @auth.route('/user', methods=['GET'])
-# @token_required
-# def get_user():
-#     logging.debug(f'get_user data: {request}')
-#     username = request.form.get('username')
-#     logging.debug(f'user: {username}')
-#     token = jwt.encode({'user': 'test', 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)},
-#                        'test' + salt)
-#     logging.debug(f'token: {token}')
-#     response = jsonify({'token': token, 'user': username, 'message': 'login successful'})
-#     return response
 
 
 @auth.route('/signup', methods=['POST'])
@@ -176,8 +148,8 @@ def signup_post():
     new_user = User(email=username, password=generate_password_hash(password, method='sha256'))
 
     # add the new user to the database
-    db.session.add(new_user)
-    db.session.commit()
+    Logindb.session.add(new_user)
+    Logindb.session.commit()
     #
     # return redirect(location=url_for('auth.login'))
     response = jsonify({'message': 'signup successful'})

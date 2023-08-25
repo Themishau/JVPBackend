@@ -1,4 +1,4 @@
-from app import db
+from app import Logindb
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
 import cryptography
@@ -22,12 +22,12 @@ class TABLENAMES(Enum):
     PASSWORD              = 'password'
 
 
-class User(db.Model):
+class User(Logindb.Model):
     __tablename__='User'
     __table_args__ = {'mysql_engine':'InnoDB', 'mysql_charset':'utf8mb4','mysql_collate':'utf8mb4_0900_ai_ci'}
-    id=db.Column('idUser', db.Integer, primary_key=True)
-    email=db.Column('email', db.String(100))
-    password=db.Column('password', db.String(100))
+    id=Logindb.Column('idUser', Logindb.Integer, primary_key=True)
+    email=Logindb.Column('email', Logindb.String(100))
+    password=Logindb.Column('password', Logindb.String(100))
 
     def __init__(self, email, password):
         print(f'user: {email} pass: {password}')

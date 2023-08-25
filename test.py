@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, jsonif
 from werkzeug.security import generate_password_hash, check_password_hash
 from UserData import User, SQL_Writer
 from flask_cors import CORS
-from app import db
+from app import Logindb
 from wtforms import StringField, PasswordField, BooleanField
 from wtforms.validators import DataRequired, Email
 import logging
